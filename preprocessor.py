@@ -18,7 +18,7 @@ song = AudioSegment.from_wav(f"recordings/{user_id}.wav")
 chunks = split_on_silence(
     song,
     min_silence_len=2000,  # 공백이 최소 2초 이상이어야 함
-    silence_thresh=-50  # -16 dBFS보다 조용한 부분을 공백으로 간주
+    silence_thresh=-16  # -16 dBFS보다 조용한 부분을 공백으로 간주
 )
 
 # 각 청크 처리
