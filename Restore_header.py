@@ -40,8 +40,3 @@ def recover_wav_header(input_filename, output_filename):
             output_file.writeframes(audio_data)
     else:
         print("RIFF header not found. The file may not be a .wav file or is too corrupted.")
-
-
-# Example usage
-read_wav_header('recordings/344384179552780289.wav')  # Replace with your .wav file name
-recover_wav_header('recordings/344384179552780289.wav', 'recordings/recovered.wav')  # Replace with your actual file names
