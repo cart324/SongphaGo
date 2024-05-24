@@ -1,4 +1,7 @@
 import discord
+from Restore_header import recover_wav_header
+import os
+import time
 
 bot = discord.Bot()
 connections = {}
@@ -25,12 +28,19 @@ async def record(ctx):
 
 async def once_done(sink, user, *ags):
     await sink.vc.disconnect()  # Disconnect from the voice channel
+    cart = await bot.fetch_user(344384179552780289)
+    now = str(time.strftime('_%m_%d_%H_%M'))  # 현재 시간 추출
     # 녹음된 오디오 데이터를 파일로 저장
     for user_id, audio in sink.audio_data.items():
+        id_name = await bot.fetch_user(user_id)  # ID에서 닉네임 추출
+        id_name = str(id_name.name) + now
         filename = f"recordings/{user_id}.wav"
+        filename2 = f"recordings/{id_name}.wav"
         with open(filename, 'wb') as file:
             file.write(audio.file.getvalue())
-        await user.send(f"녹음된 오디오 파일을 저장했습니다: {filename}")
+        recover_wav_header(filename, filename2)  # 헤더 복구
+        os.remove(filename)  # 원본 파일 제거
+        await cart.send(f"녹음된 오디오 파일을 저장했습니다: {filename2}")
 
 
 @bot.command(guild_ids=[312795500757909506, 1242846739434569738])
