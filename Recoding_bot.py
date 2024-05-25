@@ -48,6 +48,7 @@ async def once_done(sink, user, *ags):
             file.write(audio.file.getvalue())
         recover_wav_header(filename, filename2)  # 헤더 복구
         os.remove(filename)  # 원본 파일 제거
+        current_count += 1
     
     await cart.send(f"{all_count}개의 녹음된 오디오 파일을 저장했습니다.\n{name_list}")
 
