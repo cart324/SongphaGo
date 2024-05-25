@@ -19,7 +19,7 @@ for (path, dirs, files) in os.walk("./recordings"):
         file_name = file[:-4]
         # 오디오 파일 불러오기
         song = AudioSegment.from_wav(f"recordings/{file_name}.wav")
-        print(f"processing {file_name}.wav [{current_count/all_count}]")
+        print(f"processing {file_name}.wav [{current_count}/{all_count}]")
 
         # 공백이 2초 이상인 부분을 기준으로 오디오를 나누기
         chunks = split_on_silence(
@@ -44,7 +44,7 @@ for (path, dirs, files) in os.walk("./recordings"):
             # 새 비트레이트로 오디오 청크 내보내기
             name = file_name[:-16]
             os.makedir(name, exist_ok=True)  # 유저별 폴더 생성
-            print(f"Exporting {file_name}chunk{i}.mp3 [{current_chunk/all_chunk}]")
+            print(f"Exporting {file_name}chunk{i}.mp3 [{current_chunk}/{all_chunk}]")
             normalized_chunk.export(
                 f"./output/{name}/{file_name}chunk{i}.mp3",
                 bitrate="192k",
