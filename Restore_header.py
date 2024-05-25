@@ -36,7 +36,7 @@ def recover_wav_header(input_filename, output_filename):
             # Set the parameters for the output file
             output_file.setnchannels(2)  # Assuming stereo
             output_file.setsampwidth(2)  # Assuming 16-bit samples
-            output_file.setframerate(44100)  # Assuming 44100Hz sample rate
+            output_file.setframerate(48000)  # Assuming 48000Hz sample rate
             output_file.writeframes(audio_data)
     else:
         print("RIFF header not found. The file may not be a .wav file or is too corrupted.")
