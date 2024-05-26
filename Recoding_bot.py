@@ -23,7 +23,7 @@ async def record(ctx):
         once_done,  # What to do once recording is done
         ctx.channel  # The channel to disconnect from
     )
-    now = str(time.strftime('%y-%m-%d-%H:%M:%s - '))
+    now = str(time.strftime('%Y.%m.%d %H:%M:%S - '))
     print(f"{now}Recoding started, User = {ctx.author.name}")
     await ctx.respond("Started recording!", ephemeral=True)
 
@@ -39,6 +39,7 @@ async def once_done(sink, user, *ags):
     # 녹음된 오디오 데이터를 파일로 저장
     for user_id, audio in sink.audio_data.items():
         id_name = await bot.fetch_user(user_id)  # ID에서 닉네임 추출
+        id_name = id_name.name
         name_list.append(id_name)
         print(f"Saving '{id_name}.wav'... [{current_count}/{all_count}]")  # 진행 상황 출력
         filename = f"recordings/{user_id}.wav"
@@ -56,7 +57,7 @@ async def once_done(sink, user, *ags):
 @bot.command(guild_ids=[312795500757909506, 1242846739434569738])
 async def stop_recording(ctx):
     if ctx.guild.id in connections:
-        now = str(time.strftime('%y-%m-%d-%H:%M:%s - '))
+        now = str(time.strftime('%Y.%m.%d %H:%M:%S - '))
         print(f"{now}Recoding stoped, User = {ctx.author.name}")
         vc = connections[ctx.guild.id]
         vc.stop_recording()  # Stop recording and call the callback (once_done)
