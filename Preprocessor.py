@@ -15,6 +15,9 @@ os.environ["PATH"] += os.pathsep + os.path.dirname(ffmpeg_path)
 # FFmpeg 경로를 Pydub에 설정
 AudioSegment.converter = ffmpeg_path
 
+# 프로세싱 현황용 글로벌 리스트
+processing_list = []
+
 # 오디오 파일을 불러오는 함수 정의
 def match_target_amplitude(aChunk, target_dBFS):
     # 주어진 오디오 청크를 목표 dBFS에 맞게 정규화
@@ -22,10 +25,12 @@ def match_target_amplitude(aChunk, target_dBFS):
     return aChunk.apply_gain(change_in_dBFS)
 
 def process_file(index, total, file_path):
+    processing_list.append(index)  # 프로세싱 리스트 등록
     file_name = os.path.basename(file_path)[:-4]
     # 오디오 파일 불러오기
     song = AudioSegment.from_wav(file_path)
     print(f"Processing {file_name}.wav [{index + 1}/{total}]")
+    print(f"Current processing files : {processing_list}")
 
     # 공백이 2초 이상인 부분을 기준으로 오디오를 나누기
     chunks = split_on_silence(
@@ -56,6 +61,7 @@ def process_file(index, total, file_path):
             bitrate="192k",
             format="mp3"
         )
+        current_chunk += 1
 
     os.remove(f"recordings/{file_name}.wav")
 
@@ -68,13 +74,14 @@ def main():
                 file_paths.append(os.path.join(path, file))
     
     total_files = len(file_paths)
-    cpu_usage_limit = 80  # CPU 사용률을 최대 80%로 제한
+    cpu_usage_limit = 60  # CPU 사용률을 최대 60%로 제한
     check_interval = 1  # CPU 사용률을 확인하는 주기 (초)
     
     def should_add_more_workers(current_workers):
         current_cpu_usage = psutil.cpu_percent(interval=check_interval)
         return current_cpu_usage < cpu_usage_limit and current_workers < total_files
 
+    remain_file_list = list(range(1, total_files + 1))  # 전체 리스트 생성
     with ProcessPoolExecutor(max_workers=total_files) as executor:
         futures = {}
         for i, file_path in enumerate(file_paths):
@@ -83,9 +90,12 @@ def main():
             futures[executor.submit(process_file, i, total_files, file_path)] = i
             print(f"Started processing {i + 1}/{total_files}")
 
-        for future in as_completed(futures):
-            remaining_files = total_files - list(futures.values()).index(futures[future]) - 1
-            print(f"Completed file {futures[future] + 1}/{total_files}. Remaining files: {remaining_files}. Active processes: {len(futures) - remaining_files}")
+        for future in as_completed(futures):  # 남은 파일 출력
+            file_number = futures[future] + 1
+            remain_file_list.pop(file_number)
+            processing_list.pop(file_number)
+            print(f"Completed file No.{file_number}.")
+            print(f"{len(remain_file_list)} files remain : {remain_file_list}")
 
 if __name__ == "__main__":
     main()
