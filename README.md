@@ -1,4 +1,5 @@
 ### used library list
+---
 pycord
 
 PyNaCl
@@ -9,6 +10,6 @@ future
 
 psutil(for preprocess.py)
 
-
-
-### need 'ffmpeg.exe' in the 'bin' folder
+---
+---
+## need 'ffmpeg.exe' in the 'bin' folder
