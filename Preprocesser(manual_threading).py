@@ -76,8 +76,6 @@ def main():
             remain_file_list.pop(file_number)
             print(f"Completed file No.{file_number}.")
             print(f"{len(remain_file_list)} files remain : {remain_file_list}")
-    
-    os.system('shotdown -s -t 5')
 
 
 if __name__ == "__main__":
