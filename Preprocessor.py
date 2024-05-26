@@ -14,8 +14,6 @@ os.environ["PATH"] += os.pathsep + os.path.dirname(ffmpeg_path)
 # FFmpeg 경로를 Pydub에 설정
 AudioSegment.converter = ffmpeg_path
 
-# 프로세싱 현황용 글로벌 리스트
-processing_list = []
 
 # 오디오 파일을 불러오는 함수 정의
 def match_target_amplitude(aChunk, target_dBFS):
@@ -24,12 +22,10 @@ def match_target_amplitude(aChunk, target_dBFS):
     return aChunk.apply_gain(change_in_dBFS)
 
 def process_file(index, total, file_path):
-    processing_list.append(index)  # 프로세싱 리스트 등록
     file_name = os.path.basename(file_path)[:-4]
     # 오디오 파일 불러오기
     song = AudioSegment.from_wav(file_path)
     print(f"Processing {file_name}.wav [{index + 1}/{total}]")
-    print(f"Current processing files : {processing_list}")
 
     # 공백이 2초 이상인 부분을 기준으로 오디오를 나누기
     chunks = split_on_silence(
@@ -92,7 +88,6 @@ def main():
         for future in as_completed(futures):  # 남은 파일 출력
             file_number = futures[future] + 1
             remain_file_list.pop(file_number)
-            processing_list.pop(file_number)
             print(f"Completed file No.{file_number}.")
             print(f"{len(remain_file_list)} files remain : {remain_file_list}")
 
