@@ -21,6 +21,7 @@ def match_target_amplitude(aChunk, target_dBFS):
     change_in_dBFS = target_dBFS - aChunk.dBFS
     return aChunk.apply_gain(change_in_dBFS)
 
+
 def process_file(index, total, file_path):
     file_name = os.path.basename(file_path)[:-4]
     # 오디오 파일 불러오기
@@ -33,6 +34,9 @@ def process_file(index, total, file_path):
         min_silence_len=2000,  # 공백이 최소 2초 이상이어야 함
         silence_thresh=-50  # -50 dBFS보다 조용한 부분을 공백으로 간주
     )
+
+    # 길이가 1초 이하인 청크는 제외
+    chunks = [chunk for chunk in chunks if len(chunk) > 1000]
 
     # 각 청크 처리
     total_chunk = len(chunks)
@@ -60,6 +64,7 @@ def process_file(index, total, file_path):
 
     os.remove(f"recordings/{file_name}.wav")
 
+
 def main():
     # recordings 디렉토리에서 모든 wav 파일 경로 수집
     file_paths = []
@@ -67,11 +72,11 @@ def main():
         for file in files:
             if file.endswith(".wav"):
                 file_paths.append(os.path.join(path, file))
-    
+
     total_files = len(file_paths)
     cpu_usage_limit = 60  # CPU 사용률을 최대 60%로 제한
     check_interval = 1  # CPU 사용률을 확인하는 주기 (초)
-    
+
     def should_add_more_workers(current_workers):
         current_cpu_usage = psutil.cpu_percent(interval=check_interval)
         return current_cpu_usage < cpu_usage_limit and current_workers < total_files
@@ -90,6 +95,7 @@ def main():
             remain_file_list.pop(file_number)
             print(f"Completed file No.{file_number}.")
             print(f"{len(remain_file_list)} files remain : {remain_file_list}")
+
 
 if __name__ == "__main__":
     main()
