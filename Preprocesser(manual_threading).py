@@ -73,7 +73,7 @@ def main():
         
         for future in as_completed(futures):  # 남은 파일 출력
             file_number = futures[future] + 1
-            remain_file_list.pop(file_number)
+            remain_file_list.pop(file_number - 1)
             print(f"Completed file No.{file_number}.")
             print(f"{len(remain_file_list)} files remain : {remain_file_list}")
 
