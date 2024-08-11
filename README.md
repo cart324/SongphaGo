@@ -2,7 +2,7 @@
 A discord bot to troll our friends!
 
 ### used library list
-pycord
+py-cord
 
 PyNaCl
 
