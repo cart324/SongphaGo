@@ -12,5 +12,7 @@ future
 
 psutil(for preprocess.py)
 
+yt-dlp(for audio_bot.py)
+
 ---
 ## need 'ffmpeg.exe' in the 'bin' folder
