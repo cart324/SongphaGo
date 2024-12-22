@@ -10,19 +10,12 @@ import traceback
 import time
 
 bot = discord.Bot()
-connections = {}
 
 # yt-dlp 설정
 YDL_OPTIONS = {
-    'format': 'bestaudio[ext=webm][abr>=128]/bestaudio/best',
-    'noplaylist': True,
+    'format': 'bestaudio',
     'quiet': True,
-    'extractaudio': True,
-    'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '128'
-    }]
+    'noplaylist': True,
 }
 
 FFMPEG_OPTIONS = {
@@ -38,13 +31,12 @@ neogulman = "https://cdn.discordapp.com/attachments/469870241699069963/125923301
 # 목표 RMS 값
 TARGET_RMS = 150
 
-# 재생목록 관리
 queue = []
-
 embed_id = None
-
 is_loop = False
 song_cache = None
+
+guild = [312795500757909506, 1242846739434569738]
 
 
 # 볼륨 정규화 함수
@@ -68,14 +60,14 @@ def normalize_volume(audio_url: str) -> float:
         return 0.15  # 오류 시 기본 배율
 
 
-async def handling_embed(ctx, current_song_data, queue_list, is_loop):
+async def handling_embed(ctx, current_song_data, queue_list):
     global embed_id
 
-    next_song, is_url, requester, title, image, url = current_song_data
-
-    if (url is None) and (title is None):
+    if current_song_data is None:
         embed = discord.Embed(title="현재 재생중인 곡이 없습니다.", description="`/play`를 사용하여 노래를 틀어보세요!")
     else:
+        next_song, is_url, requester, title, image, url = current_song_data
+
         if len(queue_list) == 0:
             next_title = "없음"
         else:
@@ -97,7 +89,7 @@ async def handling_embed(ctx, current_song_data, queue_list, is_loop):
         await message.edit(embed=embed)
 
 
-@bot.command(guild_ids=[312795500757909506, 1242846739434569738])
+@bot.command(guild_ids=guild)
 async def join(ctx):
     """음성 채널에 입장합니다."""
     if ctx.author.voice:
@@ -108,14 +100,18 @@ async def join(ctx):
         await ctx.respond("먼저 음성 채널에 접속해주세요.")
 
 
-@bot.command(guild_ids=[312795500757909506, 1242846739434569738])
+@bot.command(guild_ids=guild)
 async def leave(ctx):
     """음성 채널에서 퇴장합니다."""
+    global embed_id
+
     if ctx.voice_client:
         embed = discord.Embed(title="플레이어가 종료되었습니다.")
         message = await ctx.channel.fetch_message(embed_id)
         await message.edit(embed=embed)
+        embed_id = None
         await ctx.voice_client.disconnect()
+        await ctx.respond("봇이 음성 채널에서 퇴장하였습니다.", ephemeral=True)
     else:
         await ctx.respond("봇이 음성 채널에 있지 않습니다.")
 
@@ -127,7 +123,7 @@ async def fetch_info(url):
         return info['url'], info.get('title', '제목 없음'), info.get('thumbnail', neogulman)
 
 
-@bot.command(guild_ids=[312795500757909506, 1242846739434569738])
+@bot.command(guild_ids=guild)
 async def play(ctx, url):
     """음악 재생: URL을 병렬로 로딩 후 재생목록에 추가"""
     # 명령어 실행 대기 상태 표시
@@ -163,7 +159,7 @@ async def play(ctx, url):
 
         # 다음 재생 곡이 생기면 임베드 수정
         if len(queue) == 1:
-            await handling_embed(ctx, song_cache, queue, is_loop)
+            await handling_embed(ctx, song_cache, queue)
 
     except Exception:
         error_log = traceback.format_exc(limit=None, chain=True)
@@ -177,7 +173,7 @@ async def play_next(ctx):
     global song_cache
 
     if not queue and not is_loop:
-        await handling_embed(ctx, None, None, None)
+        await handling_embed(ctx, None, None)
         return
 
     if is_loop and song_cache:
@@ -199,7 +195,7 @@ async def play_next(ctx):
         audio_with_volume = discord.PCMVolumeTransformer(source, volume=volume_adjustment)
         ctx.voice_client.play(audio_with_volume, after=lambda e: bot.loop.create_task(play_next(ctx)))
 
-        await handling_embed(ctx, song_cache, queue, is_loop)
+        await handling_embed(ctx, song_cache, queue)
 
     except Exception:
         error_log = traceback.format_exc(limit=None, chain=True)
@@ -208,7 +204,7 @@ async def play_next(ctx):
         await cart.send("```" + str(error_log) + "```")
 
 
-@bot.command(guild_ids=[312795500757909506, 1242846739434569738])
+@bot.command(guild_ids=guild)
 async def skip(ctx):
     """현재 곡을 건너뜁니다."""
     if ctx.voice_client and ctx.voice_client.is_playing():
@@ -218,7 +214,7 @@ async def skip(ctx):
         await ctx.respond("재생 중인 곡이 없습니다.")
 
 
-@bot.command(guild_ids=[312795500757909506, 1242846739434569738])
+@bot.command(guild_ids=guild)
 async def stop(ctx):
     """재생을 중지하고 재생목록 초기화"""
     global queue
@@ -230,24 +226,26 @@ async def stop(ctx):
         await ctx.respond("재생 중이 아닙니다.")
 
 
-@bot.command(guild_ids=[312795500757909506, 1242846739434569738])
+@bot.command(guild_ids=guild)
 async def start_loop(ctx):
     """현재 곡을 무한 반복"""
     global is_loop
     if ctx.voice_client and (song_cache is not None) and ctx.voice_client.is_playing():
         is_loop = True
+        await ctx.respond("루프가 켜졌습니다.")
     else:
-        await ctx.respond("재생 중이 아닙니다.")
+        await ctx.respond("재생 중이 아닙니다.", ephemeral=True)
 
 
-@bot.command(guild_ids=[312795500757909506, 1242846739434569738])
+@bot.command(guild_ids=guild)
 async def stop_loop(ctx):
     """무한 반복 중단"""
     global is_loop
     if is_loop:
         is_loop = False
+        await ctx.respond("루프가 꺼졌습니다.")
     else:
-        await ctx.respond("루프 중이 아닙니다.")
+        await ctx.respond("루프 중이 아닙니다.", ephemeral=True)
 
 
 with open('token.txt', 'r') as f:
